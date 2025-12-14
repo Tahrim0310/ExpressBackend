@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  profilePicture String @default("https://ui-avatars.com/api/?name=User&background=7FFFD4&color=000")
+  
+  // Profile fields
+  gender    String?
+  age       Int?
+  profession String?
+  occupation String?
+  bio       String?
+  
+  // Budget
+  budgetMin Int?
+  budgetMax Int?
+  currency  String @default("BDT")
+  
+  // Preferences
+  lookingFor String @default("Both")
+  isProfileComplete Boolean @default(false)
+  isVerified Boolean @default(false)
+  isActive  Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  listings  Listing[]
+  reviews   Review[]
+  favorites Favorite[]
+  profileDetails ProfileDetails?
+}
+
+model ProfileDetails {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Habits as JSON
+  habits    Json?
+  
+  // Arrays as JSON
+  preferredLocations Json?
+  languages Json?
+  interests Json?
+  
+  moveInDate DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Listing {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String
+  price       Int
+  location    String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  reviews     Review[]
+  favorites   Favorite[]
+}
+
+model Review {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  listingId  String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  rating     Int
+  comment    String
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Favorite {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  listingId  String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  createdAt  DateTime @default(now())
+  
+  @@unique([userId, listingId])
+}
